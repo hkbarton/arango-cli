@@ -12,13 +12,21 @@ type Command struct {
 	options map[string]string
 }
 
-// Commander run command and return result
-type Commander interface {
-	Run()
-}
-
 func (c Command) String() string {
 	return fmt.Sprintf("action: %s, args: %v, options: %v", c.action, c.args, c.options)
+}
+
+// CommandRunner run command and hanele output
+type CommandRunner interface {
+	Run(c *Command, resultChan chan []string)
+}
+
+var commandActionMap map[string]CommandRunner
+
+func init() {
+	commandActionMap = map[string]CommandRunner{
+		"exit": new(ExitCommandRunner),
+	}
 }
 
 // ParseCommand parse the input of string slice to Command
@@ -27,7 +35,7 @@ func ParseCommand(input []string) (*Command, error) {
 		return nil, fmt.Errorf("no input for parse")
 	}
 	command := &Command{
-		action:  input[0],
+		action:  strings.TrimSpace(input[0]),
 		args:    make([]string, 0, 2),
 		options: make(map[string]string),
 	}
@@ -49,4 +57,21 @@ func ParseCommand(input []string) (*Command, error) {
 		}
 	}
 	return command, nil
+}
+
+// RunCommand run command and hanele result
+func RunCommand(command *Command, runner CommandRunner) []string {
+	resultChan := make(chan []string)
+	go runner.Run(command, resultChan)
+	result := <-resultChan
+	return result
+}
+
+// RunCommandByAction automatically pick command by action and run it
+func RunCommandByAction(command *Command) []string {
+	runner, exists := commandActionMap[command.action]
+	if !exists {
+		return []string{fmt.Sprintf("Unknown command: %s", command.action)}
+	}
+	return RunCommand(command, runner)
 }
