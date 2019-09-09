@@ -3,10 +3,12 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5e143f23ff44354916a67b906f1681be795135522c995c407ee16fedb38bf9da"
+  digest = "1:cbc380fce89fdbc8706e8a8c4dc05eab0249d4b78fcc0e121715a1e790613f8d"
   name = "github.com/arangodb/go-driver"
   packages = [
     ".",
+    "cluster",
+    "http",
     "util",
   ]
   pruneopts = "UT"
@@ -23,6 +25,9 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["github.com/arangodb/go-driver"]
+  input-imports = [
+    "github.com/arangodb/go-driver",
+    "github.com/arangodb/go-driver/http",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
