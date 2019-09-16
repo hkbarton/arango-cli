@@ -18,7 +18,7 @@ func (c Command) String() string {
 
 // Runner run command and hanele output
 type Runner interface {
-	Run(c *Command, resultChan chan []string)
+	Run(c *Command, resultChan chan interface{})
 }
 
 var commandActionMap map[string]Runner
@@ -26,6 +26,7 @@ var commandActionMap map[string]Runner
 func init() {
 	commandActionMap = map[string]Runner{
 		"exit": new(ExitCommandRunner),
+		"list": new(ListCommandRunner),
 	}
 }
 
@@ -40,7 +41,7 @@ func Parse(input []string) (*Command, error) {
 		Options: make(map[string]string),
 	}
 	for i := 1; i < len(input); i++ {
-		seg := input[i]
+		seg := strings.TrimSpace(input[i])
 		if strings.HasPrefix(seg, "-") {
 			optionKey := strings.TrimPrefix(seg, "-")
 			// input starts with - is options
@@ -60,18 +61,18 @@ func Parse(input []string) (*Command, error) {
 }
 
 // Run run command and hanele result
-func Run(command *Command, runner Runner) []string {
-	resultChan := make(chan []string)
+func Run(command *Command, runner Runner) interface{} {
+	resultChan := make(chan interface{})
 	go runner.Run(command, resultChan)
 	result := <-resultChan
 	return result
 }
 
 // RunByAction automatically pick command by action and run it
-func RunByAction(command *Command) []string {
+func RunByAction(command *Command) interface{} {
 	runner, exists := commandActionMap[command.Action]
 	if !exists {
-		return []string{fmt.Sprintf("Unknown command: %s", command.Action)}
+		return fmt.Errorf("Unknown command: %s", command.Action)
 	}
 	return Run(command, runner)
 }

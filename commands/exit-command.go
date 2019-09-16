@@ -6,6 +6,6 @@ import "os"
 type ExitCommandRunner struct{}
 
 // Run run exit command
-func (r ExitCommandRunner) Run(c *Command, resultChan chan []string) {
+func (r ExitCommandRunner) Run(c *Command, resultChan chan interface{}) {
 	os.Exit(0)
 }

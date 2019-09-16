@@ -9,7 +9,7 @@ import (
 
 	"github.com/hkbarton/arango-cli/commands"
 	"github.com/hkbarton/arango-cli/state"
-	"github.com/hkbarton/arango-cli/terminal"
+	"github.com/hkbarton/arango-cli/utils"
 
 	driver "github.com/arangodb/go-driver"
 	driverHttp "github.com/arangodb/go-driver/http"
@@ -23,7 +23,7 @@ const (
 	DefaultDBPort = 8529
 )
 
-func (r mainRunner) Run(c *commands.Command, resultChan chan []string) {
+func (r mainRunner) Run(c *commands.Command, resultChan chan interface{}) {
 	host, hostExists := c.Options["h"]
 	port, portErr := strconv.ParseInt(c.Options["p"], 10, 8)
 	if !hostExists {
@@ -34,7 +34,8 @@ func (r mainRunner) Run(c *commands.Command, resultChan chan []string) {
 	}
 
 	connErr := func() {
-		resultChan <- []string{fmt.Sprintf("Failed to connect %s:%d", host, port)}
+		err := utils.FatalError{fmt.Sprintf("Failed to connect %s:%d", host, port)}
+		resultChan <- err
 		close(resultChan)
 	}
 
@@ -74,20 +75,20 @@ func main() {
 	}
 	runner := mainRunner{}
 	entryResult := commands.Run(entryCommand, runner)
-	terminal.Output(entryResult)
+	utils.Output(entryResult)
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		commandString, _ := reader.ReadString('\n')
 		if strings.TrimSpace(commandString) == "" {
-			terminal.Output(nil)
+			utils.Output(nil)
 			continue
 		}
 		command, err := commands.Parse(strings.Split(commandString, " "))
 		if err == nil {
-			terminal.Output(commands.RunByAction(command))
+			utils.Output(commands.RunByAction(command))
 		} else {
-			terminal.Output(nil)
+			utils.Output(nil)
 		}
 	}
 }
