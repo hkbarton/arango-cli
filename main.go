@@ -24,6 +24,7 @@ const (
 )
 
 func (r mainRunner) Run(c *commands.Command, resultChan chan interface{}) {
+	defer close(resultChan)
 	host, hostExists := c.Options["h"]
 	port, portErr := strconv.ParseInt(c.Options["p"], 10, 8)
 	if !hostExists {
@@ -34,9 +35,8 @@ func (r mainRunner) Run(c *commands.Command, resultChan chan interface{}) {
 	}
 
 	connErr := func() {
-		err := utils.FatalError{fmt.Sprintf("Failed to connect %s:%d", host, port)}
+		err := utils.FatalError{Message: fmt.Sprintf("Failed to connect %s:%d", host, port)}
 		resultChan <- err
-		close(resultChan)
 	}
 
 	conn, err := driverHttp.NewConnection(driverHttp.ConnectionConfig{
@@ -53,18 +53,17 @@ func (r mainRunner) Run(c *commands.Command, resultChan chan interface{}) {
 		connErr()
 		return
 	}
-	_, err = client.Database(nil, "_system")
+
+	state.SetState(map[string]interface{}{
+		"currentHost": host + ":" + strconv.Itoa(int(port)),
+		"dbClient":    client,
+	})
+
+	err = state.SetCurrentDB("_system")
 	if err != nil {
 		connErr()
 		return
 	}
-
-	state.SetState(map[string]interface{}{
-		"currentHost": host + ":" + strconv.Itoa(int(port)),
-		"currentDB":   "_system",
-		"dbClient":    client,
-	})
-	close(resultChan)
 }
 
 func main() {

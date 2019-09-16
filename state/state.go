@@ -1,6 +1,7 @@
 package state
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -14,6 +15,7 @@ var state = map[string]interface{}{
 }
 
 var mu sync.Mutex
+var currentDB driver.Database
 
 // SetState set global state
 func SetState(newState map[string]interface{}) {
@@ -35,6 +37,30 @@ func GetState(key string) interface{} {
 func DBClient() driver.Client {
 	client := GetState("dbClient")
 	return client.(driver.Client)
+}
+
+// SetCurrentDB sets current database
+func SetCurrentDB(dbName string) error {
+	mu.Lock()
+	defer mu.Unlock()
+	if dbName == "" {
+		return errors.New("Must specifiy databse to be set")
+	}
+	if state["currentDB"].(string) == dbName {
+		return nil
+	}
+	client := state["dbClient"].(driver.Client)
+	db, err := client.Database(nil, dbName)
+	if err == nil {
+		state["currentDB"] = dbName
+		currentDB = db
+	}
+	return err
+}
+
+// CurrentDB returns current database object
+func CurrentDB() driver.Database {
+	return currentDB
 }
 
 // Prompt render terminal prompt string by state
