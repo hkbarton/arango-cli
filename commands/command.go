@@ -16,21 +16,21 @@ func (c Command) String() string {
 	return fmt.Sprintf("action: %s, args: %v, options: %v", c.Action, c.Args, c.Options)
 }
 
-// CommandRunner run command and hanele output
-type CommandRunner interface {
+// Runner run command and hanele output
+type Runner interface {
 	Run(c *Command, resultChan chan []string)
 }
 
-var commandActionMap map[string]CommandRunner
+var commandActionMap map[string]Runner
 
 func init() {
-	commandActionMap = map[string]CommandRunner{
+	commandActionMap = map[string]Runner{
 		"exit": new(ExitCommandRunner),
 	}
 }
 
-// ParseCommand parse the input of string slice to Command
-func ParseCommand(input []string) (*Command, error) {
+// Parse parse the input of string slice to Command
+func Parse(input []string) (*Command, error) {
 	if input == nil || len(input) < 1 {
 		return nil, fmt.Errorf("no input for parse")
 	}
@@ -59,19 +59,19 @@ func ParseCommand(input []string) (*Command, error) {
 	return command, nil
 }
 
-// RunCommand run command and hanele result
-func RunCommand(command *Command, runner CommandRunner) []string {
+// Run run command and hanele result
+func Run(command *Command, runner Runner) []string {
 	resultChan := make(chan []string)
 	go runner.Run(command, resultChan)
 	result := <-resultChan
 	return result
 }
 
-// RunCommandByAction automatically pick command by action and run it
-func RunCommandByAction(command *Command) []string {
+// RunByAction automatically pick command by action and run it
+func RunByAction(command *Command) []string {
 	runner, exists := commandActionMap[command.Action]
 	if !exists {
 		return []string{fmt.Sprintf("Unknown command: %s", command.Action)}
 	}
-	return RunCommand(command, runner)
+	return Run(command, runner)
 }

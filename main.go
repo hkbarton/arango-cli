@@ -63,18 +63,17 @@ func (r mainRunner) Run(c *commands.Command, resultChan chan []string) {
 		"currentDB":   "_system",
 		"dbClient":    client,
 	})
-	resultChan <- nil
 	close(resultChan)
 }
 
 func main() {
-	entryCommand, err := commands.ParseCommand(os.Args)
+	entryCommand, err := commands.Parse(os.Args)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	runner := mainRunner{}
-	entryResult := commands.RunCommand(entryCommand, runner)
+	entryResult := commands.Run(entryCommand, runner)
 	terminal.Output(entryResult)
 
 	reader := bufio.NewReader(os.Stdin)
@@ -84,9 +83,9 @@ func main() {
 			terminal.Output(nil)
 			continue
 		}
-		command, err := commands.ParseCommand(strings.Split(commandString, " "))
+		command, err := commands.Parse(strings.Split(commandString, " "))
 		if err == nil {
-			terminal.Output(commands.RunCommandByAction(command))
+			terminal.Output(commands.RunByAction(command))
 		} else {
 			terminal.Output(nil)
 		}
