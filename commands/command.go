@@ -26,8 +26,10 @@ var commandActionMap map[string]Runner
 func init() {
 	commandActionMap = map[string]Runner{
 		"exit": new(ExitCommandRunner),
-		"list": new(ListCommandRunner),
+		"ls":   new(ListCommandRunner),
 		"use":  new(UseCommandRunner),
+		"open": new(OpenCommandRunner),
+		"info": new(InfoCommandRunner),
 	}
 }
 
