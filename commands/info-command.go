@@ -30,6 +30,6 @@ func (r InfoCommandRunner) Run(c *Command, resultChan chan interface{}) {
 		return
 	}
 	results := make([]string, 0, 20)
-	results = append(results, fmt.Sprintf("Total connections: %v", infoQueryResult.Document["cnt"]))
+	results = append(results, fmt.Sprintf(utils.Color("Total connections: ", utils.CyanColor)+"%v", infoQueryResult.Document["cnt"]))
 	resultChan <- results
 }

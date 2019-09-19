@@ -2,7 +2,6 @@ package state
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 
 	driver "github.com/arangodb/go-driver"
@@ -61,10 +60,4 @@ func SetCurrentDB(dbName string) error {
 // CurrentDB returns current database object
 func CurrentDB() driver.Database {
 	return currentDB
-}
-
-// Prompt render terminal prompt string by state
-func Prompt() string {
-	return fmt.Sprintf("\033[1;34m%s\033[0m.\033[32m%s\033[0m > ",
-		state["currentHost"], state["currentDB"])
 }
