@@ -1,8 +1,10 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 )
 
 // Command represent command to be execute
@@ -66,9 +68,14 @@ func Parse(input []string) (*Command, error) {
 // Run run command and hanele result
 func Run(command *Command, runner Runner) interface{} {
 	resultChan := make(chan interface{})
+	timeout, _ := time.ParseDuration("30s")
 	go runner.Run(command, resultChan)
-	result := <-resultChan
-	return result
+	select {
+	case result := <-resultChan:
+		return result
+	case <-time.After(timeout):
+		return errors.New("Connection timeout")
+	}
 }
 
 // RunByAction automatically pick command by action and run it

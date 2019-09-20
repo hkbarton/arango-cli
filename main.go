@@ -74,6 +74,9 @@ func main() {
 	}
 	runner := mainRunner{}
 	entryResult := commands.Run(entryCommand, runner)
+	if _, ok := entryResult.(error); ok {
+		entryResult = utils.FatalError{Message: fmt.Sprintf("%s", entryResult)}
+	}
 	utils.Output(entryResult)
 
 	reader := bufio.NewReader(os.Stdin)
