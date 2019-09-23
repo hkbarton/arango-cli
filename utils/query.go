@@ -16,11 +16,19 @@ type DocumentResult struct {
 }
 
 func (d DocumentResult) String() string {
-	docData, err := json.Marshal(&d.Document)
+	docData, err := json.Marshal(d.Document)
 	if err != nil {
 		return fmt.Sprintf("%s\t\t%v", d.ID, "Content Parsing Error")
 	}
 	return fmt.Sprintf("%s\t%v", d.ID, string(docData))
+}
+
+func (d DocumentResult) JsonString() string {
+	docData, err := json.MarshalIndent(d.Document, "", "\t")
+	if err != nil {
+		return fmt.Sprintf("%s\t\t%v", d.ID, "Content Parsing Error")
+	}
+	return string(docData)
 }
 
 func getCursor(db driver.Database, aql string, args map[string]interface{}) (driver.Cursor, error) {
@@ -53,10 +61,10 @@ func QueryOne(db driver.Database, aql string, args map[string]interface{}) (*Doc
 
 func QueryAll(db driver.Database, aql string, args map[string]interface{}) ([]*DocumentResult, int, error) {
 	cursor, err := getCursor(db, aql, args)
-	defer cursor.Close()
 	if err != nil {
 		return nil, 0, err
 	}
+	defer cursor.Close()
 	count := cursor.Count()
 	results := make([]*DocumentResult, 0, 10)
 	for cursor.HasMore() {
