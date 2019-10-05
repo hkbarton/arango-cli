@@ -3,9 +3,47 @@ package commands
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/user"
+	"path/filepath"
 	"strings"
 	"time"
 )
+
+const maxCommandHistory = 200
+
+var (
+	commandHistory []string
+	historyCursor  int
+)
+
+func getCommandHistoryFile() string {
+	var folder string
+	curUser, err := user.Current()
+	if err == nil {
+		folder = curUser.HomeDir
+	} else {
+		folder, _ = filepath.Abs(os.Args[0])
+	}
+	historyFile := filepath.Join(folder, ".arango-cli-his")
+	return historyFile
+}
+
+func init() {
+	historyFile := getCommandHistoryFile()
+	content, err := ioutil.ReadFile(getCommandHistoryFile())
+	if err != nil {
+		_, err = os.Create(historyFile)
+		if err != nil {
+			panic(err)
+		}
+		commandHistory = make([]string, 0, 20)
+	} else {
+		commandHistory = strings.Split(string(content), "\n")
+	}
+	historyCursor = -1
+}
 
 // Command represent command to be execute
 type Command struct {
@@ -33,6 +71,41 @@ func init() {
 		"open": new(OpenCommandRunner),
 		"info": new(InfoCommandRunner),
 	}
+}
+
+// PushHistory pushes command input into history list
+func PushHistory(commandStr string) {
+	commandHistory = append(commandHistory, strings.TrimSpace(commandStr))
+	if len(commandHistory) > maxCommandHistory {
+		start := len(commandHistory) - maxCommandHistory
+		commandHistory = commandHistory[start:]
+	}
+	data := []byte(strings.TrimSpace(strings.Join(commandHistory, "\n")))
+	ioutil.WriteFile(getCommandHistoryFile(), data, 0755)
+}
+
+// Last return last command from history list
+func Last() string {
+	if len(commandHistory) == 0 {
+		return ""
+	}
+	historyCursor--
+	if historyCursor < 0 {
+		historyCursor = len(commandHistory) - 1
+	}
+	return commandHistory[historyCursor]
+}
+
+// Next return next command from history list
+func Next() string {
+	if len(commandHistory) == 0 {
+		return ""
+	}
+	historyCursor++
+	if historyCursor > len(commandHistory)-1 {
+		historyCursor = 0
+	}
+	return commandHistory[historyCursor]
 }
 
 // Parse parse the input of string slice to Command

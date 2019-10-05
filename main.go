@@ -86,6 +86,7 @@ func main() {
 			utils.Output(nil)
 			continue
 		}
+		commands.PushHistory(commandString)
 		command, err := commands.Parse(strings.Split(commandString, " "))
 		if err == nil {
 			utils.Output(commands.RunByAction(command))
